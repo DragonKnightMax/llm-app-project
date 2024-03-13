@@ -64,13 +64,6 @@ def get_conversation_chain():
 
 
 def handle_user_input(user_question):
-    with st.chat_message("user"):
-        st.write(user_question)
-
-    chatbot_reply = st.chat_message("assistant")
-    with chatbot_reply:
-        st.write()
-
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
     vector_store = FAISS.load_local(FAISS_INDEX, embeddings, allow_dangerous_deserialization=True)
     input_docs = vector_store.similarity_search(user_question)
@@ -80,9 +73,7 @@ def handle_user_input(user_question):
         {"input_documents": input_docs, "user_question": user_question}, 
         return_only_outputs=True
     )
-    
-    with chatbot_reply:
-        st.write(response['output_text'])
+    return response['output_text']
 
 
 def process_pdf_files(pdf_files):
@@ -97,15 +88,25 @@ def main():
     st.set_page_config("Chat with your PDFs", page_icon=":books:")
     st.header("Chat with your PDFs using Gemini AI 🤖")
 
-    user_question =  st.chat_input("Ask a question:")
-    if user_question:
-        handle_user_input(user_question)
-
     with st.sidebar:
         st.title("Menu")
         pdf_files = st.file_uploader("Upload your PDF file(s)", accept_multiple_files=True)
-        if st.button("Process"):
+
+    if pdf_files:
+        with st.sidebar:
             process_pdf_files(pdf_files)
+    else:
+        st.info("Upload PDF file(s) to begin the conversation")
+
+    user_question =  st.chat_input("Ask a question:", disabled=len(pdf_files) == 0)
+    if user_question:
+        with st.chat_message("user"):
+            st.write(user_question)
+
+        with st.chat_message("assistant"):
+            with st.spinner(""):
+                response = handle_user_input(user_question)
+            st.write(response)
 
 
 if __name__ == "__main__":
