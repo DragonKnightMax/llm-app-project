@@ -72,7 +72,7 @@ def handle_user_input(user_question):
         st.write()
 
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-    vector_store = FAISS.load_local(FAISS_INDEX, embeddings)
+    vector_store = FAISS.load_local(FAISS_INDEX, embeddings, allow_dangerous_deserialization=True)
     input_docs = vector_store.similarity_search(user_question)
     
     conversation_chain = get_conversation_chain()
